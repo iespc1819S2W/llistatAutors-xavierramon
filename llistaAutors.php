@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <!--
 To change this license header, choose License Headers in Project Properties.
 To change this template file, choose Tools | Templates
@@ -8,14 +8,22 @@ and open the template in the editor.
     <head>
         <meta charset="UTF-8">
         <title></title>
+        <style>
+            table{
+                margin: auto;
+            }            
+            div{
+                margin: auto;
+            }            
+        </style>
     </head>
     <body>
         <h1>Algo</h1>
         <?php
         $perid = isset($_POST['idcercar']) ? $_POST['idcercar'] : "";
         $pernom = isset($_POST['nomcercar']) ? $_POST['nomcercar'] : "";
-        $cercarper = isset($_POST['cercarper']) ? $_POST['cercarper'] : "1";
-        $mentres = isset($_POST['mentres']) ? $_POST['mentres'] : "ID_AUT";
+        $cercarper = isset($_POST['cercarper']) ? $_POST['cercarper'] : "";
+        $mentres = isset($_POST['mentres']) ? $_POST['mentres'] : "";
         //$pagina = isset($_POST['pagina']) ? $_POST['pagina'] : "ID_AUT";
 
         $mysqli = new mysqli("localhost", "xavier", "1234", "biblioteca");
@@ -27,6 +35,7 @@ and open the template in the editor.
         $ordenat = "ID_AUT";
         $ordre = "asc";
         $queryFi = "select count(*) as 'quantitat' from AUTORS";
+        $queryDarrerId = "select max(ID_AUT) from AUTORS";
         if ($cursor = $mysqli->query($queryFi)) {
             while ($row = $cursor->fetch_assoc()) {
                 $quantitat = $row['quantitat'];
@@ -46,37 +55,37 @@ and open the template in the editor.
             $ordre = "asc";
             $ordenat = "ID_AUT";
         }
-        if (!empty($_POST["nasc"])) {
+        if (isset($_POST["nasc"])) {
             $ordenat = "NOM_AUT";
             $ordre = "asc";
         }
-        if (!empty($_POST["ndesc"])) {
+        if (isset($_POST["ndesc"])) {
             $ordenat = "NOM_AUT";
             $ordre = "desc";
         }
-        if (!empty($_POST["casc"])) {
+        if (isset($_POST["casc"])) {
             $ordenat = "ID_AUT";
             $ordre = "desc";
         }
-        if (!empty($_POST["cdesc"])) {
+        if (isset($_POST["cdesc"])) {
             $ordenat = "ID_AUT";
             $ordre = "asc";
         }
-        if (!empty($_POST["seguent"])) {
+        if (isset($_POST["seguent"])) {
             if ($pagina != $npagines) {
                 $pagina++;
             };
-        } elseif (!empty($_POST["anterior"])) {
+        } elseif (isset($_POST["anterior"])) {
             if ($pagina > 0) {
                 $pagina--;
             };
-        } elseif (!empty($_POST["inici"])) {
+        } elseif (isset($_POST["inici"])) {
             $pagina = 0;
-        } elseif (!empty($_POST["fi"])) {
+        } elseif (isset($_POST["fi"])) {
             $pagina = $npagines;
         }
         $vinici = $pagina * $vfi;
-        if (!empty($_POST["cercar"])) {
+        if (isset($_POST["cercar"])) {
             if (!empty($pernom)) {
                 $cercarper = "'%" . $pernom . "%'";
                 $mentres = "NOM_AUT";
@@ -84,14 +93,13 @@ and open the template in the editor.
                 $cercarper = $perid;
                 $mentres = "ID_AUT";
             } else {
-                $cercarper = "1";
+                $cercarper = "'%'";
                 $mentres = "ID_AUT";
             }
-            $query = "select * from AUTORS where " . $mentres . " like " . $cercarper . " order by " . $ordenat . " " . $ordre . " limit " . $vinici . "," . $vfi;
-        } else {
-            $query = "select * from AUTORS order by " . $ordenat . " " . $ordre . " limit " . $vinici . "," . $vfi;
         }
-
+        $query = "select * from AUTORS where " . $mentres . " like " . $cercarper . " order by " . $ordenat . " " . $ordre . " limit " . $vinici . "," . $vfi;
+        $queryAgregar = "INSERT INTO AUTORS VALUES ('9999', 'Fulano','1974-04-12', 'ES', '')";
+        //echo $query;
         echo "<table  border = \"1\">";
         echo "<tr>";
         echo "<th>ID</th>";
@@ -110,6 +118,7 @@ and open the template in the editor.
         $mysqli->close();
         ?>
         <form action="llistaAutors.php" method="post" id="filtres" >
+            <div>
             <input type="hidden" name="pagina" value="<?= $pagina ?>">
             <input type="hidden" name="ordenat" value="<?= $ordenat ?>">
             <input type="hidden" name="ordre" value="<?= $ordre ?>">
@@ -128,6 +137,7 @@ and open the template in the editor.
             <input type="submit" value="Anterior" name="anterior">
             <input type="submit" value="Següent" name="seguent">
             <input type="submit" value="Fi" name="fi">
+            </div>
         </form>
     </body>
 </html>
