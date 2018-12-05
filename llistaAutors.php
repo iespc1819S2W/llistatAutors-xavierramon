@@ -12,19 +12,21 @@ and open the template in the editor.
             table{
                 margin: auto;
             }            
-            div{
-                margin: auto;
-            }            
         </style>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     </head>
     <body>
-        <h1>Algo</h1>
+       
         <?php
-        $perid = isset($_POST['idcercar']) ? $_POST['idcercar'] : "";
-        $pernom = isset($_POST['nomcercar']) ? $_POST['nomcercar'] : "";
-        $cercarper = isset($_POST['cercarper']) ? $_POST['cercarper'] : "";
-        $mentres = isset($_POST['mentres']) ? $_POST['mentres'] : "";
-        //$pagina = isset($_POST['pagina']) ? $_POST['pagina'] : "ID_AUT";
+        $ID_AUT = isset($_POST['ID_AUT']) ? $_POST['ID_AUT'] : "";
+        $NOM_AUT = isset($_POST['NOM_AUT']) ? $_POST['NOM_AUT'] : "";
+        $cercarper = isset($_POST['cercarper']) ? $_POST['cercarper'] : "'%'";
+        $mentres = isset($_POST['mentres']) ? $_POST['mentres'] : "NOM_AUT";
+        $addAutor = isset($_POST['afegirAutor']) ? $_POST['afegirAutor'] : "";
+        $pagina = isset($_POST['pagina']) ? $_POST['pagina'] : "ID_AUT";
 
         $mysqli = new mysqli("localhost", "xavier", "1234", "biblioteca");
         $mysqli->set_charset("utf8");
@@ -32,10 +34,13 @@ and open the template in the editor.
         $vinici = 0;
         $vfi = 20;
         $quantitat = "";
+        $darrerId = "";
         $ordenat = "ID_AUT";
         $ordre = "asc";
+        $quary = "";
         $queryFi = "select count(*) as 'quantitat' from AUTORS";
-        $queryDarrerId = "select max(ID_AUT) from AUTORS";
+        $editaSel = "";
+
         if ($cursor = $mysqli->query($queryFi)) {
             while ($row = $cursor->fetch_assoc()) {
                 $quantitat = $row['quantitat'];
@@ -86,59 +91,111 @@ and open the template in the editor.
         }
         $vinici = $pagina * $vfi;
         if (isset($_POST["cercar"])) {
-            if (!empty($pernom)) {
-                $cercarper = "'%" . $pernom . "%'";
+            if (!empty($NOM_AUT)) {
+                $cercarper = "'%" . $NOM_AUT . "%'";
                 $mentres = "NOM_AUT";
-            } else if (!empty($perid)) {
-                $cercarper = $perid;
+            } else if (!empty($ID_AUT)) {
+                $cercarper = $ID_AUT;
                 $mentres = "ID_AUT";
             } else {
                 $cercarper = "'%'";
                 $mentres = "ID_AUT";
             }
         }
+        if (isset($_POST["afegir"])) {
+            $queryDarrerId = "select max(ID_AUT) as max from AUTORS";
+            if ($cursor = $mysqli->query($queryDarrerId)) {
+                while ($row = $cursor->fetch_assoc()) {
+                    $darrerId = $row['max'];
+                    $darrerId++;
+                };
+                $cursor->free();
+            };
+            echo $darrerId . "</br>";
+            if (!empty($addAutor)) {
+                $queryAgregar = "INSERT INTO AUTORS(ID_AUT, NOM_AUT) VALUES ($darrerId, '$addAutor')";
+                $r = $mysqli->query($queryAgregar);
+                //echo $r;
+                //echo $queryAgregar . "</br>";
+            }
+        }
+        if (isset($_POST["borrar"])) {
+            $idBorrar = isset($_POST['borrar']) ? $_POST['borrar'] : "0";
+            if ($idBorrar > 0) {
+                $queryEliminar = "DELETE FROM AUTORS WHERE ID_AUT = '$idBorrar'";
+                $delete = $mysqli->query($queryEliminar);
+                //echo $queryEliminar . "</br>";
+            }
+        }
+        if (isset($_POST["editar"])) {
+            $editaSel = $_POST['editar'];
+        }
+        if (isset($_POST["guardar"])) {
+            $idAut = $_POST["guardar"];
+            $nomAut = $_POST["modNomAut"];
+            $queryEditar = "UPDATE AUTORS SET NOM_AUT = '$nomAut' WHERE ID_AUT = '$idAut'";
+            $delete = $mysqli->query($queryEditar);
+            //echo $queryEditar . "</br>";
+        }
+
         $query = "select * from AUTORS where " . $mentres . " like " . $cercarper . " order by " . $ordenat . " " . $ordre . " limit " . $vinici . "," . $vfi;
-        $queryAgregar = "INSERT INTO AUTORS VALUES ('9999', 'Fulano','1974-04-12', 'ES', '')";
-        //echo $query;
-        echo "<table  border = \"1\">";
+        echo $query . "</br>";
+        echo '<div class="container"><table class="table">';
+        echo '<thead class="thead-dark">';
         echo "<tr>";
-        echo "<th>ID</th>";
-        echo "<th>NOM AUTOR</th>";
+        echo '<th scope="col">ID</th>';
+        echo '<th scope="col">NOM AUTOR</th>';
+        echo '<th scope="col"></th>';
+        echo '<th scope="col"></th>';
         echo "</tr>";
         if ($result = $mysqli->query($query)) {
             while ($row = $result->fetch_assoc()) {
+
                 echo "<tr>";
                 echo "<td>" . $row["ID_AUT"] . "</td>";
-                echo "<td>" . $row["NOM_AUT"] . "</td>";
+                if ($editaSel == $row["ID_AUT"]) {
+                    echo "<td><input type='text' name='modNomAut' value ='" . $row["NOM_AUT"] . "' form='filtres'></td>";
+                    echo "<td><button type='submit' name='cancelar' value='" . $row["ID_AUT"] . "' form='filtres'>Cancelar</button></td>";
+                    echo "<td><button type='submit' name='guardar' value='" . $row["ID_AUT"] . "' form='filtres'>Guardar</button></td>";
+                } else {
+                    echo "<td>" . $row["NOM_AUT"] . "</td>";
+                    echo "<td><button type='submit' name='borrar' value='" . $row["ID_AUT"] . "' form='filtres'>Borrar</button></td>";
+                    echo "<td><button type='submit' name='editar' value='" . $row["ID_AUT"] . "' form='filtres'>Editar</button></td>";
+                }
                 echo "</tr>";
             }
             $result->free();
         }
-
+        echo "</table></div>";
         $mysqli->close();
         ?>
-        <form action="llistaAutors.php" method="post" id="filtres" >
-            <div>
-            <input type="hidden" name="pagina" value="<?= $pagina ?>">
-            <input type="hidden" name="ordenat" value="<?= $ordenat ?>">
-            <input type="hidden" name="ordre" value="<?= $ordre ?>">
-            <input type="hidden" name="cercarper" value="<?= $cercarper ?>">
-            <input type="hidden" name="mentres" value="<?= $mentres ?>">
-            Cercar per ID:
-            <input type="text" name="idcercar">
-            Cercar per Nom:
-            <input type="text" name="nomcercar">
-            <input type="submit" value="Cercar" name="cercar"></br>
-            <input type="submit" value="NOM" name="nasc">
-            <input type="submit" value="nom" name="ndesc">
-            <input type="submit" value="CODI" name="casc">
-            <input type="submit" value="codi" name="cdesc"></br>
-            <input type="submit" value="Inici" name="inici">
-            <input type="submit" value="Anterior" name="anterior">
-            <input type="submit" value="Següent" name="seguent">
-            <input type="submit" value="Fi" name="fi">
-            </div>
-        </form>
+        <div class="container">
+            <h1>Llista Autors</h1>
+            <form action="llistaAutors.php" method="post" id="filtres">
+                <input type="hidden" name="pagina" value="<?= $pagina ?>">
+                <input type="hidden" name="ordenat" value="<?= $ordenat ?>">
+                <input type="hidden" name="ordre" value="<?= $ordre ?>">
+                <input type="hidden" name="cercarper" value="<?= $cercarper ?>">
+                <input type="hidden" name="mentres" value="<?= $mentres ?>">
+                Cercar per ID:
+                <input type="text" name="ID_AUT">
+                Cercar per Nom:
+                <input type="text" name="NOM_AUT">
+                <input type="submit" class="btn btn-primary" value="Cercar" name="cercar"></br>
+                <input type="submit" class="btn btn-primary" value="NOM" name="nasc">
+                <input type="submit" class="btn btn-info" value="nom" name="ndesc">
+                <input type="submit" class="btn btn-primary" value="CODI" name="casc">
+                <input type="submit" class="btn btn-info" value="codi" name="cdesc">
+                <input type="submit" class="btn btn-dark" value="Inici" name="inici">
+                <input type="submit" class="btn btn-secondary" value="Anterior" name="anterior">
+                <input type="submit" class="btn btn-secondary" value="Següent" name="seguent">
+                <input type="submit" class="btn btn-dark" value="Fi" name="fi"></br>
+                Autor:
+                <input type="text" name="afegirAutor">
+                <input type="submit" class="btn btn-primary" value="Afegir" name="afegir"></br>
+            </form>
+        </div>
+
     </body>
 </html>
 
