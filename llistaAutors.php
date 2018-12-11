@@ -19,16 +19,16 @@ and open the template in the editor.
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     </head>
     <body>
-       
+
         <?php
         $ID_AUT = isset($_POST['ID_AUT']) ? $_POST['ID_AUT'] : "";
         $NOM_AUT = isset($_POST['NOM_AUT']) ? $_POST['NOM_AUT'] : "";
         $cercarper = isset($_POST['cercarper']) ? $_POST['cercarper'] : "'%'";
         $mentres = isset($_POST['mentres']) ? $_POST['mentres'] : "NOM_AUT";
         $addAutor = isset($_POST['afegirAutor']) ? $_POST['afegirAutor'] : "";
+        $addNacio = isset($_POST['afegirNacio']) ? $_POST['afegirNacio'] : "";
         $pagina = isset($_POST['pagina']) ? $_POST['pagina'] : "ID_AUT";
-
-        $mysqli = new mysqli("localhost", "xavier", "1234", "biblioteca");
+        $mysqli = new mysqli("127.0.0.1", "root", "", "biblioteca");
         $mysqli->set_charset("utf8");
         $pagina = 1;
         $vinici = 0;
@@ -40,7 +40,6 @@ and open the template in the editor.
         $quary = "";
         $queryFi = "select count(*) as 'quantitat' from AUTORS";
         $editaSel = "";
-
         if ($cursor = $mysqli->query($queryFi)) {
             while ($row = $cursor->fetch_assoc()) {
                 $quantitat = $row['quantitat'];
@@ -49,7 +48,6 @@ and open the template in the editor.
             $npagines -= 1;
             $cursor->free();
         };
-
         if (isset($_POST["pagina"])) {
             $pagina = $_POST["pagina"];
         }
@@ -113,10 +111,14 @@ and open the template in the editor.
             };
             echo $darrerId . "</br>";
             if (!empty($addAutor)) {
-                $queryAgregar = "INSERT INTO AUTORS(ID_AUT, NOM_AUT) VALUES ($darrerId, '$addAutor')";
+                if (!empty($addNacio)) {
+                    $queryAgregar = "INSERT INTO AUTORS(ID_AUT, NOM_AUT, FK_NACIONALITAT) VALUES ($darrerId, '$addAutor', '$addNacio')";
+                    //echo $r;
+                    //echo $queryAgregar . "</br>";
+                } else {
+                    $queryAgregar = "INSERT INTO AUTORS(ID_AUT, NOM_AUT) VALUES ($darrerId, '$addAutor')";
+                }
                 $r = $mysqli->query($queryAgregar);
-                //echo $r;
-                //echo $queryAgregar . "</br>";
             }
         }
         if (isset($_POST["borrar"])) {
@@ -133,41 +135,13 @@ and open the template in the editor.
         if (isset($_POST["guardar"])) {
             $idAut = $_POST["guardar"];
             $nomAut = $_POST["modNomAut"];
-            $queryEditar = "UPDATE AUTORS SET NOM_AUT = '$nomAut' WHERE ID_AUT = '$idAut'";
+            $nomNacio = $_POST["modNacio"];
+            $queryEditar = "UPDATE AUTORS SET NOM_AUT = '$nomAut', FK_NACIONALITAT = '$nomNacio' WHERE ID_AUT = '$idAut'";
             $delete = $mysqli->query($queryEditar);
             //echo $queryEditar . "</br>";
         }
-
         $query = "select * from AUTORS where " . $mentres . " like " . $cercarper . " order by " . $ordenat . " " . $ordre . " limit " . $vinici . "," . $vfi;
         echo $query . "</br>";
-        echo '<div class="container"><table class="table">';
-        echo '<thead class="thead-dark">';
-        echo "<tr>";
-        echo '<th scope="col">ID</th>';
-        echo '<th scope="col">NOM AUTOR</th>';
-        echo '<th scope="col"></th>';
-        echo '<th scope="col"></th>';
-        echo "</tr>";
-        if ($result = $mysqli->query($query)) {
-            while ($row = $result->fetch_assoc()) {
-
-                echo "<tr>";
-                echo "<td>" . $row["ID_AUT"] . "</td>";
-                if ($editaSel == $row["ID_AUT"]) {
-                    echo "<td><input type='text' name='modNomAut' value ='" . $row["NOM_AUT"] . "' form='filtres'></td>";
-                    echo "<td><button type='submit' name='cancelar' value='" . $row["ID_AUT"] . "' form='filtres'>Cancelar</button></td>";
-                    echo "<td><button type='submit' name='guardar' value='" . $row["ID_AUT"] . "' form='filtres'>Guardar</button></td>";
-                } else {
-                    echo "<td>" . $row["NOM_AUT"] . "</td>";
-                    echo "<td><button type='submit' name='borrar' value='" . $row["ID_AUT"] . "' form='filtres'>Borrar</button></td>";
-                    echo "<td><button type='submit' name='editar' value='" . $row["ID_AUT"] . "' form='filtres'>Editar</button></td>";
-                }
-                echo "</tr>";
-            }
-            $result->free();
-        }
-        echo "</table></div>";
-        $mysqli->close();
         ?>
         <div class="container">
             <h1>Llista Autors</h1>
@@ -192,10 +166,44 @@ and open the template in the editor.
                 <input type="submit" class="btn btn-dark" value="Fi" name="fi"></br>
                 Autor:
                 <input type="text" name="afegirAutor">
+                Nacionalitat:
+                <input type="text" name="afegirNacio">
                 <input type="submit" class="btn btn-primary" value="Afegir" name="afegir"></br>
             </form>
         </div>
+        <?php
+        echo '<div class="container"><table class="table">';
+        echo '<thead class="thead-dark">';
+        echo "<tr>";
+        echo '<th scope="col">ID</th>';
+        echo '<th scope="col">NOM AUTOR</th>';
+        echo '<th scope="col">NACIONALITAT</th>';
+        echo '<th scope="col"></th>';
+        echo '<th scope="col"></th>';
+        echo "</tr>";
+        if ($result = $mysqli->query($query)) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr>";
+                echo "<td>" . $row["ID_AUT"] . "</td>";
+                if ($editaSel == $row["ID_AUT"]) {
+                    echo "<td><input type='text' name='modNomAut' value ='" . $row["NOM_AUT"] . "' form='filtres'></td>";
+                    echo "<td><input type='text' name='modNacio' value ='" . $row["FK_NACIONALITAT"] . "' form='filtres'></td>";
+                    echo "<td><button type='submit' name='cancelar' value='" . $row["ID_AUT"] . "' form='filtres'>Cancelar</button></td>";
+                    echo "<td><button type='submit' name='guardar' value='" . $row["ID_AUT"] . "' form='filtres'>Guardar</button></td>";
+                } else {
+                    echo "<td>" . $row["NOM_AUT"] . "</td>";
+                    echo "<td>" . $row["FK_NACIONALITAT"] . "</td>";
+                    echo "<td><button type='submit' name='borrar' value='" . $row["ID_AUT"] . "' form='filtres'>Borrar</button></td>";
+                    echo "<td><button type='submit' name='editar' value='" . $row["ID_AUT"] . "' form='filtres'>Editar</button></td>";
+                }
+                echo "</tr>";
+            }
+            $result->free();
+        }
+        echo "</table></div>";
+        $mysqli->close();
+        ?>
+
 
     </body>
 </html>
-
